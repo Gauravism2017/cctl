@@ -1,0 +1,4 @@
+bin/
+.claude/
+.serena/
+.DS_Store
