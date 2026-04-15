@@ -1,18 +1,36 @@
-# cctl — Claude Code Context Tool
+<p align="center">
+  <img src="assets/banner.svg" alt="cctl — Claude Code Context Tool" width="700">
+</p>
 
-A TUI and CLI tool for managing [Claude Code](https://docs.anthropic.com/en/docs/claude-code) context. Toggle skills, rules, agents, plugins, and MCP servers on and off. Save named profiles to switch between project contexts instantly.
+<p align="center">
+  <strong>TUI and CLI for managing Claude Code context</strong><br>
+  Toggle skills, rules, agents, plugins, and MCP servers. Save profiles. Switch contexts instantly.
+</p>
+
+<p align="center">
+  <a href="#install">Install</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="docs/cli.md">CLI Reference</a> ·
+  <a href="docs/tui.md">TUI Guide</a> ·
+  <a href="docs/profiles.md">Profiles</a> ·
+  <a href="docs/architecture.md">Architecture</a>
+</p>
+
+---
 
 ## Why
 
-Claude Code loads everything in `~/.claude/` — every skill, rule, agent, plugin, and MCP server. On a large setup this burns context window tokens on tools you don't need for the current project. A Go backend project doesn't need frontend design skills, TypeScript reviewers, or Playwright MCP.
+Claude Code loads everything in `~/.claude/` — every skill, rule, agent, plugin, and MCP server. On a large setup this burns context window tokens on things irrelevant to your current project.
 
-cctl lets you curate what's active per project:
+cctl lets you curate what's active:
 
-- **Web project** — enable frontend skills, TypeScript agents, Playwright MCP
-- **Go CLI project** — enable Go patterns, Go reviewers, gopls LSP
-- **Research project** — enable Obsidian MCP, Zotero, paper-writing skills
+| Context | What you enable |
+|---------|----------------|
+| **Web project** | frontend skills, TypeScript agents, Playwright MCP |
+| **Go CLI project** | Go patterns, Go reviewers, gopls LSP |
+| **Research** | Obsidian MCP, Zotero, paper-writing skills |
 
-Switch between these setups in one command.
+Save a profile, switch projects, restore in one command.
 
 ## Install
 
@@ -24,158 +42,34 @@ cd cctl
 make install
 ```
 
-This builds the binary and copies it to `~/.local/bin/cctl`. Make sure `~/.local/bin` is in your `PATH`.
-
-### From source (without install)
-
-```bash
-make build
-./bin/cctl
-```
+Builds the binary and copies it to `~/.local/bin/cctl`. Ensure `~/.local/bin` is in your `PATH`.
 
 ## Quick Start
 
 ```bash
-# Launch the TUI — browse and toggle items interactively
+# Launch the interactive TUI
 cctl
 
 # Save your current setup as a profile
 cctl profile save my-project
 
-# Bind a profile to a project directory
+# Bind it to a project directory
 cd ~/my-project
 cctl init my-project
 
-# Launch Claude Code with the bound profile
+# Launch Claude Code with the profile loaded
 cctl launch
 ```
 
-## How It Works
+## Features
 
-cctl uses a **symlink store** to manage items:
+**Interactive TUI** — Browse and toggle all item types across tabbed views. Filter, bulk enable/disable, and save changes.
 
-```
-~/.claude/
-├── store/              # Permanent home for ALL items
-│   ├── skills/
-│   ├── rules/
-│   └── agents/
-├── skills/             # Symlinks → store/skills/<name>
-├── rules/              # Symlinks → store/rules/<name>
-├── agents/             # Symlinks → store/agents/<name>
-├── settings.json       # Plugin + MCP server state
-└── profiles/           # Named profile snapshots (JSON)
-```
+**Profiles** — Snapshot enabled state of all items. Load a profile to restore your setup. [Full guide →](docs/profiles.md)
 
-| Action | What happens |
-|--------|-------------|
-| **Enable** skill/rule/agent | Create symlink from active dir → store |
-| **Disable** skill/rule/agent | Remove symlink (store copy untouched) |
-| **Enable** plugin | Add to `enabledPlugins` in `settings.json` |
-| **Disable** plugin | Remove from `enabledPlugins` |
-| **Enable** MCP server | Move config to `mcpServers` in `settings.json` |
-| **Disable** MCP server | Move config to `disabledMcpServers` |
+**Per-project binding** — Bind profiles to directories with `cctl init`. Run `cctl launch` to load and start Claude Code.
 
-Items installed by Claude Code are automatically adopted into the store on next scan.
-
-## CLI Reference
-
-```
-cctl                                # Launch TUI
-cctl launch                         # Load bound profile + start Claude Code
-cctl launch -p <name>               # Load named profile + start Claude Code
-cctl init <profile>                 # Bind profile to current directory
-cctl init --remove <profile>        # Unbind profile from current directory
-cctl migrate                        # Migrate from vault to symlink store
-cctl profile save <name>            # Save current state as profile
-cctl profile load <name>            # Load a profile
-cctl profile list                   # List all profiles
-cctl profile delete <name>          # Delete a profile
-```
-
-### Shell completions
-
-```bash
-# Zsh
-cctl completion zsh > "${fpath[1]}/_cctl"
-
-# Bash
-cctl completion bash > /etc/bash_completion.d/cctl
-
-# Fish
-cctl completion fish > ~/.config/fish/completions/cctl.fish
-```
-
-## TUI
-
-Launch with `cctl` (no arguments).
-
-The TUI has tabs for each item type: **Skills**, **Rules**, **Agents**, **Plugins**, **MCP Servers**, **Profiles**, and a **Summary** of pending changes.
-
-### Keybindings
-
-| Key | Action |
-|-----|--------|
-| `Tab` / `Shift+Tab` | Switch tabs |
-| `j` / `k` | Move cursor |
-| `Space` | Toggle item on/off |
-| `/` | Filter items |
-| `c` | Clear filter |
-| `a` | Enable all visible |
-| `n` | Disable all visible |
-| `s` | Save changes and exit |
-| `q` | Quit without saving |
-
-### Profiles tab
-
-| Key | Action |
-|-----|--------|
-| `Enter` / `l` | View profile details |
-| `Space` | Load profile |
-| `e` | Edit profile |
-| `d` | Delete profile |
-| `n` | Create new profile |
-
-In edit mode: `Enter`/`Space` to expand sections, `Space` on items to toggle, `Tab` to jump sections, `a`/`x` to enable/disable all in section, `s` to save.
-
-## Profiles
-
-Profiles snapshot the enabled/disabled state of all items. Save a profile, switch context, then load it to restore your setup.
-
-### Save and load
-
-```bash
-# Snapshot current state
-cctl profile save web-dev
-
-# Restore it later
-cctl profile load web-dev
-```
-
-Loading a profile enables everything in the profile and disables everything else. Items in the profile that no longer exist on disk are skipped.
-
-### Per-project profiles
-
-Bind one or more profiles to a directory:
-
-```bash
-cd ~/my-web-project
-cctl init web-dev
-cctl launch              # loads web-dev profile, starts Claude Code
-```
-
-### Multi-profile directories
-
-Monorepos or multi-context directories can bind multiple profiles:
-
-```bash
-cd ~/monorepo
-cctl init frontend
-cctl init backend
-cctl init data-pipeline
-```
-
-When you run `cctl launch`, an interactive picker appears:
+**Multi-profile directories** — Monorepos can bind multiple profiles. An interactive picker appears at launch:
 
 ```
 Select profile:
@@ -184,101 +78,37 @@ Select profile:
     data-pipeline
 ```
 
-Use `j`/`k` to navigate, `Enter` to select, `q` to cancel.
+**Direct launch** — Skip binding entirely with `cctl launch -p <name>`.
 
-To skip the picker, pass the profile directly:
+**Symlink store** — Items are never deleted. Enable creates a symlink, disable removes it. [Architecture →](docs/architecture.md)
 
-```bash
-cctl launch -p backend
-```
+**Shell completions** — Built-in for Bash, Zsh, Fish, and PowerShell.
 
-To remove a binding:
-
-```bash
-cctl init --remove data-pipeline
-```
-
-### Automatic profile loading
-
-Add a shell wrapper to `~/.zshrc` (or `~/.bashrc`) for automatic profile loading when you run `claude`:
-
-```bash
-claude() {
-  if [[ -f ".claude/profile" ]]; then
-    local profiles
-    profiles=($(cat .claude/profile))
-    if [[ ${#profiles[@]} -eq 1 ]]; then
-      cctl profile load "${profiles[1]}" 2>/dev/null
-    fi
-  fi
-  command claude "$@"
-}
-```
-
-### Profile storage format
-
-Profiles are stored as JSON in `~/.claude/profiles/`:
-
-```json
-{
-  "name": "web-dev",
-  "created": "2025-04-15T10:30:00Z",
-  "skills": ["frontend-design", "api-design"],
-  "rules": ["common", "web"],
-  "agents": ["code-reviewer.md", "architect.md"],
-  "plugins": ["superpowers@claude-plugins-official"],
-  "mcpServers": ["context7", "playwright"]
-}
-```
-
-## Migration
-
-If upgrading from an older vault-based setup (`skills-vault/`, `rules-vault/`, `agents-vault/` directories):
-
-```bash
-cctl migrate
-```
-
-This moves items from vault directories into `store/` and replaces active items with symlinks. Migration runs automatically on first launch if vault directories are detected.
-
-## Development
-
-### Build
-
-```bash
-make build    # Build to bin/cctl
-make install  # Build + copy to ~/.local/bin/
-make vet      # Run go vet
-make clean    # Remove bin/
-```
-
-### Project structure
+## Commands
 
 ```
-cmd/cctl/
-  main.go           Entry point
-  root.go           Root command, TUI launcher, shared setup
-  launch.go         Launch command with profile resolution
-  init.go           Project-profile binding
-  migrate.go        Vault-to-store migration command
-  profile.go        Profile CRUD subcommands
-  picker.go         Interactive profile selector
-
-internal/
-  config/           Path constants, directory management
-  model/            ConfigItem struct, ItemType enum
-  scanner/          Filesystem scanners (skills, rules, agents, plugins, MCP)
-  ops/              Enable/disable operations per item type
-  tui/              Bubbletea TUI (app, list widget, profile tab, styles)
-  profile/          Profile save/load/list/delete logic
-  migrate/          Vault → store migration
+cctl                              Launch TUI
+cctl launch [-p <profile>]        Load profile + start Claude Code
+cctl init <profile>               Bind profile to current directory
+cctl init --remove <profile>      Unbind profile
+cctl profile save <name>          Save current state
+cctl profile load <name>          Load a profile
+cctl profile list                 List profiles
+cctl profile delete <name>        Delete a profile
+cctl migrate                      Migrate from vault to symlink store
 ```
 
-### Dependencies
+[Full CLI reference →](docs/cli.md)
 
-- [Bubble Tea](https://github.com/charmbracelet/bubbletea) — TUI framework
-- [Lip Gloss](https://github.com/charmbracelet/lipgloss) — Terminal styling
-- [Cobra](https://github.com/spf13/cobra) — CLI framework
+## Documentation
+
+| Document | Contents |
+|----------|----------|
+| [CLI Reference](docs/cli.md) | All commands, flags, shell completions, shell wrapper |
+| [TUI Guide](docs/tui.md) | Keybindings, tabs, profile editing |
+| [Profiles](docs/profiles.md) | Save/load, per-project, multi-profile, examples |
+| [Architecture](docs/architecture.md) | Symlink store, item types, auto-adoption, migration |
+| [Development](docs/development.md) | Building, project structure, contributing |
 
 ## License
 
