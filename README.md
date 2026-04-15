@@ -34,6 +34,22 @@ Save a profile, switch projects, restore in one command.
 
 ## Install
 
+### Download binary
+
+Grab the latest release for your platform from [Releases](https://github.com/Gauravism2017/cctl/releases):
+
+```bash
+# macOS (Apple Silicon)
+curl -Lo cctl.tar.gz https://github.com/Gauravism2017/cctl/releases/latest/download/cctl_$(curl -s https://api.github.com/repos/Gauravism2017/cctl/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)_darwin_arm64.tar.gz
+tar xzf cctl.tar.gz && mv cctl ~/.local/bin/ && rm cctl.tar.gz
+
+# Linux (amd64)
+curl -Lo cctl.tar.gz https://github.com/Gauravism2017/cctl/releases/latest/download/cctl_$(curl -s https://api.github.com/repos/Gauravism2017/cctl/releases/latest | grep tag_name | cut -d'"' -f4 | tr -d v)_linux_amd64.tar.gz
+tar xzf cctl.tar.gz && mv cctl ~/.local/bin/ && rm cctl.tar.gz
+```
+
+### Build from source
+
 **Prerequisites:** Go 1.21+
 
 ```bash
